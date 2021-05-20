@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/style.css">
+    <script>
+      var play=true;
+      var pr=JSON.parse(localStorage.getItem("games"))["hearts"];
+      var profs=JSON.parse(localStorage.getItem("profs"));
+      var plArr={};
+      window.onload=()=> {
+        let o=1;
+        Object.keys(pr).forEach((x)=> {
+          if (!(x=="Guest")) plArr[x]=pr[x];
+          else {
+            plArr["Guest "+o]=pr[x];
+          }
+        });
+        table=document.getElementById("table");
+        for (let i=0; i<4; i++) {
+          c1 = table.rows[0].insertCell();
+          c1.innerHTML=Object.keys(pr)[i];
+          c1.className="track";
+
+          c2 = table.rows[1].insertCell();
+          c2.className="track";
+          inp=document.createElement("input");
+          inp.type="number";
+          inp.style.cssText="width:70px";
+          inp.value=0;
+          inp.max=26;
+          inp.min=0;
+          inp.className="track";
+          c2.appendChild(inp);
+
+          c3=table.rows[2].insertCell();
+          c3.className="track";
+          c3.innerHTML=pr[Object.keys(pr)[i]];
+
+          if (!(Object.keys(plArr)[i].substring(0,5) == "Guest")) {
+            profs.forEach((x) => {
+              if (x.name == Object.keys(plArr)[i]) {
+                c1.style.backgroundColor = x.color;
+                c2.style.backgroundColor = x.color;
+                c3.style.backgroundColor = x.color;
+              }
+            });
+          }
+        }
+      }
+      const save = () => {
+        if (!play) return;
+        table=document.getElementById("table");
+        let lose=-1;
+        let tot=0;
+        for (let i=0; i<4; i++) tot += Number(table.rows[1].cells[i].firstChild.value);
+        if (tot!=26) {
+          document.getElementById("alert").innerHTML = "Invalid values: total "+tot+" points.";
+          return;
+        }
+        for (let i=0; i<4; i++) {
+          if (Number(table.rows[1].cells[i].firstChild.value) == 26) {
+            moon(i);
+            return;
+          }
+          let n=Number(table.rows[2].cells[i].innerHTML);
+          n+=Number(table.rows[1].cells[i].firstChild.value);
+          table.rows[2].cells[i].innerHTML=n;
+          table.rows[1].cells[i].firstChild.value=0;
+        }
+        finish();
+      }
+      const moon = (plr) => {
+        if (document.getElementById("div")) return;
+        let div=document.createElement("div");
+        div.className="track";
+        div.id="div";
+        p=document.createElement("p");
+        h=document.createElement("h2");
+        h.innerHTML="You Shot the Moon!";
+        div.appendChild(h);
+        p.innerHTML="Congratulations, "+"player "+(plr+1)+"! You shot the moon! You now have the option to remove 26 points from your score or add 26 points to everyone else's score.";
+        div.appendChild(p);
+        b1=document.createElement("button");
+        b1.innerHTML="Remove 26 from my score";
+        b1.onclick=()=>remove26(plr);
+        b1.className="moon";
+        b2=document.createElement("button");
+        b2.innerHTML="Add 26 to their scores";
+        b2.onclick=()=>add26(plr);
+        b2.className="moon";
+        div.appendChild(b1);
+        div.appendChild(b2);
+        document.body.appendChild(div);
+      }
+      const remove26 = (plr) => {
+        let table=document.getElementById("table");
+        let c=Number(table.rows[2].cells[plr].innerHTML);
+        table.rows[2].cells[plr].innerHTML=c-26;
+        document.getElementById("div").remove();
+        for (let i=0; i<4; i++) table.rows[1].cells[i].firstChild.value = 0;
+        finish();
+      }
+      const add26 = (plr) => {
+        let table=document.getElementById("table");
+        for (let i=0; i<4; i++) {
+          if (!(i==plr)) {
+            let c=Number(table.rows[2].cells[i].innerHTML);
+            table.rows[2].cells[i].innerHTML=c+26;
+          }
+          table.rows[1].cells[i].firstChild.value=0;
+        }
+        document.getElementById("div").remove();
+        finish();
+      }
+      const finish = () => {
+        let table=document.getElementById("table");
+        let lose=false;
+        for (let i=0; i<4; i++) if (Number(table.rows[2].cells[i].innerHTML)>=100) lose=true;
+
+        if (lose) {
+          let low=0;
+          for (let i=0; i<4; i++) low = Number(table.rows[2].cells[i].innerHTML) < Number(table.rows[2].cells[low].innerHTML) ? i:low;
+
+          let wnr=table.rows[0].cells[low].innerHTML;
+          let lsr=[];
+          for (let i=0; i<4; i++) if (!(i==low)) lsr.push(table.rows[0].cells[i].innerHTML);
+
+          if (!(wnr.substring(0,5)=="Guest")) {
+            let wnrOb;
+            profs.forEach((x) => {if (x.name==wnr) wnrOb=x;});
+
+            for (let i=0; i<lsr.length; i++) {
+              if (!(lsr[i].substring(0,5)=="Guest")) wnrOb.ops[lsr[i]]["hearts"]++;
+              else wnrOb.otherWins["hearts"]++;
+            }
+
+            wnrOb.totWins["hearts"]++;
+            wnrOb.totGames["hearts"]++;
+          }
+
+          for (let i=0; i<lsr.length; i++) {
+            if (!(lsr[i].substring(0,5)=="Guest")) {
+              let lsrOb;
+              profs.forEach((x) => {if (x.name==lsr[i]) lsrOb=x;});
+              lsrOb.totGames["hearts"]++;
+            }
+          }
+
+          localStorage.setItem("profs",JSON.stringify(profs));
+          let g=JSON.parse(localStorage.getItem("games"));
+          g["hearts"]={};
+          localStorage.setItem("games",JSON.stringify(g));
+
+          document.getElementById("alert").innerHTML = wnr+" wins!";
+          play=false;
+          document.getElementById("saveBut").remove();
+        }
+        else {
+          for (let i=0; i<4; i++) pr[table.rows[0].cells[i].innerHTML] = Number(table.rows[2].cells[i].innerHTML);
+
+          
+          let g=JSON.parse(localStorage.getItem("games"));
+          g["hearts"]=pr;
+          localStorage.setItem("games",JSON.stringify(g));
+        }
+      }
+    </script>
+    <script type="text/javascript" src="info.js"></script>
+  </head>
+  <body>
+    <button class = "info" onclick = "info('hearts')">?</button>
+    <h1>Hearts</h1>
+    <table id="table" class="track">
+      <tr></tr>
+      <tr></tr>
+      <tr></tr>
+    </table>
+    <br>
+    <p id="alert"></p>
+    <br>
+    <button id ="saveBut" onclick="save()">Save</button>
+    <button onclick = "window.location.href = '/games.html'" class = "back">く</button>
+  </body>
+</html>

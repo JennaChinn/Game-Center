@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/style.css">
+    <script>
+      var play=true;
+      var pr=JSON.parse(localStorage.getItem("games"))["cribbage"];
+      var profs=JSON.parse(localStorage.getItem("profs"));
+      var plArr={};
+      window.onload=()=> {
+        let o=1;
+        Object.keys(pr).forEach((x)=> {
+          if (!(x=="Guest")) plArr[x]=pr[x];
+          else {
+            plArr["Guest "+o]=pr[x];
+          }
+        });
+        table=document.getElementById("table");
+        for (let i=0; i<2; i++) {
+          let c1=table.rows[0].insertCell()
+          c1.innerHTML = Object.keys(plArr)[i];
+          c1.className="track";
+
+          let c2=table.rows[1].insertCell();
+          let inp=document.createElement("input");
+          inp.className="track";
+          inp.type="number";
+          inp.min="0";
+          inp.max="29";
+          inp.value=0;
+          c2.className="track";
+          c2.appendChild(inp);
+
+          let c3=table.rows[2].insertCell();
+          c3.className="track";
+          c3.innerHTML=plArr[Object.keys(plArr)[i]];
+
+          if (!(Object.keys(plArr)[i].substring(0,5) == "Guest")) {
+            profs.forEach((x) => {
+              if (x.name == Object.keys(plArr)[i]) {
+                c1.style.backgroundColor = x.color;
+                c2.style.backgroundColor = x.color;
+                c3.style.backgroundColor = x.color;
+              }
+            });
+          }
+        }
+      }
+      const save = () => {
+        if (!play) return;
+        let win=-1
+        table=document.getElementById("table");
+        for (let i=0; i<table.rows[0].cells.length; i++) {
+          let v=Number(table.rows[1].cells[i].firstChild.value);
+          table.rows[2].cells[i].innerHTML = v + Number(table.rows[2].cells[i].innerHTML);
+          if (Number(table.rows[2].cells[i].innerHTML)>=121) {
+            if (win>-1) win=Number(table.rows[2].cells[i].innerHTML)>Number(table.rows[2].cells[win].innerHTML)?i:win;
+            else win=i;
+          }
+          table.rows[1].cells[i].firstChild.value=0;
+        }
+        if (win>-1) {
+          let wnr=table.rows[0].cells[win].innerHTML;
+          let lsr=[];
+          for (let i=0; i<table.rows[0].cells.length; i++) if (!(i==win)) lsr.push(table.rows[0].cells[i].innerHTML);
+
+          if (!(wnr.substring(0,5)=="Guest")) {
+            let wnrOb;
+            profs.forEach((x) => {if (x.name==wnr) wnrOb=x;});
+            for (let i=0; i<lsr.length; i++) {
+              if (!(lsr[i].substring(0,5)=="Guest")) wnrOb.ops[lsr[i]]["cribbage"]++;
+              else wnrOb.otherWins["cribbage"]++;
+            }
+            wnrOb.totWins["cribbage"]++;
+            wnrOb.totGames["cribbage"]++;
+
+            for (let i=0; i<lsr.length; i++) {
+              if (!(lsr[i].substring(0,5)=="Guest")) {
+                let lsrOb;
+                profs.forEach((x) => {if (x.name==lsr[i]) lsrOb=x;});
+                lsrOb.totGames["cribbage"]++;
+              }
+            }
+          }
+
+          localStorage.setItem("profs",JSON.stringify(profs));
+
+          let g=JSON.parse(localStorage.getItem("games"));
+          g["hearts"]={};
+          localStorage.setItem("games",JSON.stringify(g));
+
+          play=false;
+          document.getElementById("win").innerHTML = wnr + " wins!";
+          document.getElementById("saveBut").remove();
+        }
+        else {
+          for (let i=0; i<table.rows[0].cells.length; i++) pr[table.rows[0].cells[i].innerHTML] = Number(table.rows[2].cells[i].innerHTML);
+          let g=JSON.parse(localStorage.getItem("games"));
+          g["cribbage"]=pr;
+          localStorage.setItem("games",JSON.stringify(g));
+        }
+      }
+    </script>
+    <script type="text/JavaScript" src="info.js"></script>
+  </head>
+  <body>
+    <button class="info" onclick="info('cribbage')">?</button>
+    <h1>Cribbage</h1>
+    <table id="table" class="track">
+      <tr></tr>
+      <tr></tr>
+      <tr></tr>
+    </table>
+    <br>
+    <p id="win"></p>
+    <button id = "saveBut" onclick = "save()">Save</button>
+    <button onclick = "window.location.href = '/games.html'" class = "back">く</button>
+  </body>
+</html>

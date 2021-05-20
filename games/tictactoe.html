@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/style.css">
+    <script>
+      var pr=JSON.parse(localStorage.getItem("games"))["tictactoe"];
+      var profs=JSON.parse(localStorage.getItem("profs"));
+      var color;
+      var p1={name:"Guest 1"};
+      var p2={name:"Guest 2"};
+      window.onload=()=> {
+        profs.forEach((x)=>{
+          if (x.name==pr[0]) p1=x;
+          if (x.name==pr[1]) p2=x;
+        });
+        var table=document.getElementById("table");
+        for (let i=0; i<3; i++) {
+          let r=table.insertRow();
+          for (let j=0; j<3; j++) {
+            let c=r.insertCell();
+            c.className = "ticTacToe";
+            if (j==0) c.style.borderLeft="0px";
+            if (j==2) c.style.borderRight="0px";
+            if (i==0) c.style.borderTop="0px";
+            if (i==2) c.style.borderBottom="0px";
+            c.onclick=()=>tic(i,j);
+          }
+        }
+        sessionStorage.setItem("turn","x");
+      }
+      const tic=(x,y)=> {
+        if (table.rows[x].cells[y].innerHTML=="") {
+          table.rows[x].cells[y].innerHTML=sessionStorage.getItem("turn");
+          sessionStorage.setItem("turn",sessionStorage.getItem("turn")=="x"?"o":"x");
+        }
+        let w=check();
+        if (!w=="") done(w);
+      }
+      const check=()=> {
+        let win="";
+        tb=[];
+        for (let i=0; i<3; i++) {
+          tb.push([]);
+          for (let j=0; j<3; j++) {
+            tb[i].push(table.rows[i].cells[j].innerHTML);
+          }
+        }
+        for (let i=0; i<3; i++) {
+          if (tb[0][i]==tb[1][i] && tb[0][i]==tb[2][i] &&!tb[0][i]=="") win=tb[0][i]+" ";
+          if (tb[i][0]==tb[i][1] && tb[i][0]==tb[i][2] && !tb[i][0]=="") win=tb[i][0]+" ";
+        }
+        if (tb[0][0]==tb[1][1] && tb[0][0]==tb[2][2] && !tb[0][0]=="") win=tb[0][0]+" ";
+        if (tb[0][2]==tb[1][1] && tb[0][2]==tb[2][0] && !tb[0][2]=="") win=tb[0][2]+" ";
+        full=tb.every((x)=>x.every((y)=>!y==""));
+        if (full&&win=="") win="no one";
+        return win;
+      }
+      const done=(winner)=> {
+        for (let i=0; i<3; i++) {
+          for (let j=0; j<3; j++) {
+            if (table.rows[i].cells[j].innerHTML=="") table.rows[i].cells[j].innerHTML=" ";
+          }
+        }
+        if (winner=="no one" && document.getElementById("a").innerHTML=="") {
+          document.getElementById('a').innerHTML="No one wins.";
+          if (!(p1.name=="Guest 1")) p1.totGames["tictactoe"]++;
+          if (!(p2.name=="Guest 2") && !(p2.name=="Guest 1")) p2.totGames["tictactoe"]++;
+        }
+        wnr=winner=="x"?p1:p2;
+        lsr=wnr==p1?p2:p1;
+        if (document.getElementById("a").innerHTML=="") document.getElementById("a").innerHTML=`${wnr.name} wins!`;
+
+        if (!(wnr.name=="Guest 1") && !(wnr.name=="Guest 2")) {
+          if (!(lsr.name=="Guest 2") && !(lsr.name=="Guest 1"))  wnr.ops[lsr.name]["tictactoe"]++;
+          else {
+            wnr.otherWins["tictactoe"]++;
+          }
+          wnr.totWins["tictactoe"]++;
+          wnr.totGames["tictactoe"]++;
+        }
+        if (!(lsr.name=="Guest 1") && !(lsr.name=="Guest 2")) lsr.totGames["tictactoe"]++;
+        
+        localStorage.setItem("profs",JSON.stringify(profs));
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Tic-Tac-Toe</h1>
+    <table class = "ticTacToe" id = "table" align = "center"></table>
+    <p align="center" id="a"></p>
+    <button onclick = "window.location.href = '/games.html'" class = "back">く</button>
+  </body>
+</html>

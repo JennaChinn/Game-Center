@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/style.css">
+    <script src="profInfo.js"></script>
+    <script>
+      window.onload=()=> {
+        profs=JSON.parse(localStorage.getItem("profs"));
+        table=document.getElementById("table");
+        let r=table.insertRow();
+
+        for (let i=0; i<10; i++) {
+          if (i%2==0) r=table.insertRow();
+          let c=r.insertCell();
+          c.className="prof";
+
+          let pic=document.createElement("img");
+          pic.src=profs[i].picture;
+          pic.className="prof";
+          pic.alt="?";
+          c.appendChild(pic);
+          
+          let p=document.createElement("p");
+          let tw=0;
+          Object.keys(profs[i].totWins).forEach((x) => tw+=profs[i].totWins[x]);
+          p.innerHTML = `${profs[i].name}<br>${tw} wins`;
+          p.className="prof";
+          c.appendChild(p);
+
+          c.style.backgroundColor=profs[i].color;
+
+          b=document.createElement("button");
+          b.innerHTML="Stats";
+          b.onclick=()=>inf(i);
+          c.appendChild(b);
+        }
+
+        let cB = document.createElement('button');
+        cB.innerHTML = "Clear all data";
+        cB.onclick = () => {
+          let clr = confirm("Are you sure you want to clear all data? This action cannot be undone.");
+          if (clr) {
+            localStorage.clear();
+            window.location.href = "/index.html";
+          }
+        }
+        document.body.appendChild(cB);
+      }
+    </script>
+  </head>
+  <body>
+    <h1 id="top">Profiles</h1>
+    <table class="prof" id="table"></table><br>
+    <button onclick = "window.location.href = '/index.html'" class = "back">く</button>
+  </body>
+</html>

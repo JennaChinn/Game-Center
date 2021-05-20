@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/style.css">
+    <script>
+      var pr=JSON.parse(localStorage.getItem("games"))["connect4"];
+      var profs=JSON.parse(localStorage.getItem("profs"));
+      var color;
+      var p1={
+        name:"Guest 1",
+        color:"red"
+      };
+      var p2={
+        name:"Guest 2",
+        color:"yellow"
+      };
+      window.onload=()=> {
+        profs.forEach((x)=>{
+          if (x.name==pr[0]) p1=x;
+          if (x.name==pr[1]) p2=x;
+        });
+        color=p1.color;
+        let tb=[]
+        var table=document.getElementById("table");
+        for (let i=0; i<7; i++) {
+          tb.push([]);
+          let r=table.insertRow();
+          for (let j=0; j<7; j++) {
+            tb[i].push("");
+            c=r.insertCell();
+            c.className="connect4";
+            c.onclick=()=>drop(j);
+          }
+        }
+        sessionStorage.setItem("tb",JSON.stringify(tb));
+      }
+      const drop=(x)=> {
+        let tb=JSON.parse(sessionStorage.getItem("tb"));
+        let c=-1
+        for (let i=6; i>=0; i--) {
+          if (tb[i][x]=="") {
+            c=i;
+            break;
+          }
+        }
+        if (c>-1) {
+          tb[c][x]=color;
+          document.getElementById("table").rows[c].cells[x].style.backgroundColor=color;
+          let plr=(color==p1.color?p1:p2);
+          if (!(plr.name.substring(0,5)=="Guest")) {
+            let img=document.createElement("img");
+            img.className="connect4";
+            img.src=plr.picture;
+            document.getElementById("table").rows[c].cells[x].appendChild(img);
+          }
+          try {color=color==p1.color?p2.color:p1.color;} catch (err) {alert(err)};
+        }
+        sessionStorage.setItem("tb",JSON.stringify(tb));
+        let w=check();
+        if (!w=="") done(win);
+      }
+      const check=()=> {
+        win=""
+        let tb=JSON.parse(sessionStorage.getItem("tb"));
+        for (let i=6; i>=0; i--) {
+          for (let j=0; j<tb.length; j++) {
+            if (j>=3) {
+              if (equal(tb[i].slice(j-3,j+1))) win=tb[i][j];//to side
+              if (i>=3) {
+                if (equal([tb[i][j],tb[i-1][j-1],tb[i-2][j-2],tb[i-3][j-3]])) win=tb[i][j];
+              }//diagonal left
+            }
+            if (i>=3) {
+              if (equal([tb[i][j],tb[i-1][j],tb[i-2][j],tb[i-3][j]])) win=tb[i][j];
+            }//up
+            if (j<=3) {
+              if (i>=3) {
+                if (equal([tb[i][j],tb[i-1][j+1],tb[i-2][j+2],tb[i-3][j+3]])) win=tb[i][j];
+              }//diagonal right
+            }
+            if (!win=="") return win;
+          }
+        }
+        return "";
+      }
+      const equal=(arr)=> {
+        return arr.every((x)=>arr[0]==x);
+      }
+      const done=(winner)=> {
+        let tb=JSON.parse(sessionStorage.getItem("tb"));
+        for (let i=0; i<7; i++) {
+          for (let j=0; j<7; j++) {
+            if (tb[i][j]=="") tb[i][j]=" ";
+          }
+        }
+        let wnr=winner==p1.color?p1:p2;
+        let lsr=wnr==p1?p2:p1;
+        if (document.getElementById("a").innerHTML=="") document.getElementById("a").innerHTML=`${wnr.name} wins!`;
+        sessionStorage.setItem("tb",JSON.stringify(tb));
+
+        if (!(wnr.name=="Guest 1" && !(wnr.name=="Guest 2"))) {
+          if (!(lsr.name=="Guest 2") && !(lsr.name=="Guest 1"))  wnr.ops[lsr.name]["connect4"]++;
+          else {
+            wnr.otherWins["connect4"]++;
+          }
+          wnr.totWins["connect4"]++;
+          wnr.totGames["connect4"]++;
+        }
+        if (!(lsr.name=="Guest 1") && !(lsr.name=="Guest 2")) lsr.totGames["connect4"]++;
+        
+        localStorage.setItem("profs",JSON.stringify(profs));
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Connect 4</h1>
+    <table class="connect4" id="table"></table>
+    <p align="center" id="a"></p>
+    <button onclick="window.location.href = '/games.html'" class = "back">く</button>
+  </body>
+</html>

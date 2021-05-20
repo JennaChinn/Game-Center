@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/style.css">
+    <script>
+      var play=true;
+      var pr=JSON.parse(localStorage.getItem("games"))["rummy"];
+      var profs=JSON.parse(localStorage.getItem("profs"));
+      var plArr={};
+      window.onload=()=> {
+        let o=1;
+        Object.keys(pr).forEach((x)=> {
+          if (!(x=="Guest")) plArr[x]=pr[x];
+          else {
+            plArr["Guest "+o]=pr[x];
+          }
+        });
+
+        let table=document.getElementById("table");
+        for (let i=0; i<Object.keys(plArr).length; i++) {
+          c1 = table.rows[0].insertCell();c1.innerHTML=Object.keys(plArr)[i];
+          c1.className="track";
+          if (!(Object.keys(plArr)[i].substring(0,5) == "Guest")) {
+            profs.forEach((x) => {
+              if (x.name == Object.keys(plArr)[i]) c1.style.backgroundColor = x.color;
+            });
+          }
+
+          c2 = table.rows[1].insertCell();
+          c2.className="track";
+          inp=document.createElement("input");
+          inp.type="number";
+          inp.style.cssText="width:70px";
+          inp.value=0;
+          inp.step=5;
+          inp.max="400";
+          inp.className="track";
+          c2.appendChild(inp);
+
+          c3=table.rows[2].insertCell();
+          c3.className="track";
+          c3.innerHTML=plArr[Object.keys(plArr)[i]];
+          if (!(Object.keys(plArr)[i].substring(0,5) == "Guest")) {
+            profs.forEach((x) => {
+              if (x.name == Object.keys(plArr)[i]) {
+                c1.style.backgroundColor = x.color;
+                c2.style.backgroundColor = x.color;
+                c3.style.backgroundColor = x.color;
+              }
+            });
+          }
+        }
+      }
+      const save = () => {
+        if (!play) return;
+        let win=-1;
+        let table=document.getElementById("table");
+        for (let i=0; i<table.rows[0].cells.length; i++) {
+          let n=table.rows[1].cells[i].firstChild.value;
+          if (n>300) n=300;
+          if (n<-300) n=-300;
+          let m=n%5;
+          let t=Number(table.rows[2].cells[i].innerHTML);
+          t+=n-m;
+          table.rows[2].cells[i].innerHTML=t;
+          table.rows[1].cells[i].firstChild.value=0;
+          if (t>=500) {
+            if (win==-1) win=i;
+            else win = table.rows[2].cells[win].innerHTML > table.rows[2].cells[i].innerHTML ? win:i;
+            play=false;
+          }
+          pr[table.rows[0].cells[i].innerHTML] = Number(table.rows[2].cells[i].innerHTML);
+        }
+        if (win>-1) {
+          let wnr=table.rows[0].cells[win].innerHTML;
+          document.getElementById("win").innerHTML = wnr + " wins!";
+          let lsr=[];
+          for (let i=0; i<table.rows[0].cells.length; i++) if (!(i==win)) lsr.push(table.rows[0].cells[i].innerHTML);
+
+          if (!(wnr.substring(0,5)=="Guest")) {
+            let wnrOb;
+            profs.forEach((x) => {if (x.name==wnr) wnrOb=x;});
+            for (let i=0; i<lsr.length; i++) {
+              if (!(lsr[i].substring(0,5)=="Guest")) wnrOb.ops[lsr[i]]["rummy"]++;
+              else wnrOb.otherWins["rummy"]++;
+            }
+            wnrOb.totWins["rummy"]++;
+            wnrOb.totGames["rummy"]++;
+          }
+          for (let i=0; i<lsr.length; i++) {
+            if (!(lsr[i].substring(0,5)=="Guest")) {
+              let lsrOb;
+              profs.forEach((x) => {if (x.name==lsr[i]) lsrOb=x;});
+              lsrOb.totGames["rummy"]++;
+            }
+          }
+          localStorage.setItem("profs",JSON.stringify(profs));
+
+          let g=JSON.parse(localStorage.getItem("games"));
+          g["rummy"]={};
+          localStorage.setItem("games",JSON.stringify(g));
+
+          document.getElementById("saveBut").remove();
+        }
+        else {
+          let g=JSON.parse(localStorage.getItem("games"));
+          g["rummy"]=pr;
+          localStorage.setItem("games",JSON.stringify(g));
+        }
+      }
+    </script>
+    <script type="text/JavaScript" src="info.js"></script>
+  </head>
+  <body>
+    <button class="info" onclick="info('rummy')">?</button>
+    <h1>Rummy</h1>
+    <table id="table" class="track">
+      <tr></tr>
+      <tr></tr>
+      <tr></tr>
+    </table>
+    <br>
+    <p id="win"></p>
+    <br>
+    <button id = "saveBut" onclick = "save()">Save</button>
+    <button onclick = "window.location.href = '/games.html'" class = "back">く</button>
+  </body>
+</html>
